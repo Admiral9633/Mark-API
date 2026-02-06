@@ -119,12 +119,15 @@ class OllamaClassifier:
             result = response.json()
             ai_response = result.get("response", "{}")
             
+            logger.info(f"Raw AI extraction response (first 500 chars): {ai_response[:500]}")
+            
             try:
                 extracted = json.loads(ai_response)
                 logger.info(f"Extracted invoice data: {extracted}")
                 return extracted
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse extraction response: {ai_response}")
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse extraction response: {e}")
+                logger.error(f"Full AI response: {ai_response}")
                 return {}
                 
         except requests.exceptions.RequestException as e:
