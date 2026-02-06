@@ -84,28 +84,49 @@ class OllamaClassifier:
 
     def _build_classification_prompt(self, text: str) -> str:
         """Build the classification prompt for Ollama"""
-        # Use more text for better extraction (first 2500 characters)
-        text_sample = text[:2500] if len(text) > 2500 else text
+        # Use more text for better extraction (first 3000 characters)
+        text_sample = text[:3000] if len(text) > 3000 else text
         
-        prompt = f"""Analysiere dieses Dokument und antworte NUR mit JSON (keine Erklärungen).
+        prompt = f"""Du bist ein Experte für Rechnungserkennung. Analysiere dieses Dokument und gib ein VOLLSTÄNDIGES JSON zurück.
 
-DOKUMENT TEXT:
+DOKUMENT:
 {text_sample}
 
-PRÜFE:
-1. Enthält das Wort "Rechnung" oder "Invoice"? → is_invoice = true
-2. Wer ist der ABSENDER?
-   - Wenn "Dr. med. Björn Micka" ABSENDER ist → invoice_type = "outgoing"
-   - Wenn eine andere Firma ABSENDER ist → invoice_type = "incoming"
-3. Extrahiere: Rechnungsnummer, Datum, Betrag (als ZAHL!), Lieferant
+DEINE AUFGABEN:
+1. Ist dies eine Rechnung? Suche nach "Rechnung", "Invoice", "RE-", Rechnungsnummer
+2. invoice_type bestimmen:
+   - "outgoing": Absender ist "Dr. med. Björn Micka" → ICH habe die Rechnung geschrieben
+   - "incoming": Absender ist eine andere Firma → ICH muss bezahlen
+3. EXTRAHIERE alle Daten (auch wenn schwer zu finden):
+   - invoice_number: Die Rechnungsnummer (z.B. "2026-F00023-R001")
+   - invoice_date: Das Rechnungsdatum im Format YYYY-MM-DD
+   - total_amount: Der Gesamtbetrag als ZAHL (z.B. 150.00)
+   - vendor_name: Der Name des Absenders
+   - customer_name: Der Name des Empfängers
 
-BEISPIEL JSON:
-{{"is_invoice":true,"invoice_type":"outgoing","confidence":0.95,"reasoning":"Enthält Rechnung 2026-F00023-R001","invoice_number":"2026-F00023-R001","invoice_date":"2026-01-21","due_date":null,"total_amount":150.00,"net_amount":126.05,"tax_amount":23.95,"currency":"EUR","vendor_name":"Dr. med. Björn Micka","vendor_address":"Christoph-Dassler-Str. 22, 91074 Herzogenaurach","customer_name":"Erkan Ökcü"}}
+ANTWORTE mit diesem EXAKTEN JSON (ALLE Felder müssen vorhanden sein!):
+{{
+  "is_invoice": true,
+  "invoice_type": "outgoing",
+  "confidence": 0.95,
+  "reasoning": "Rechnung 2026-F00023-R001 gefunden",
+  "invoice_number": "2026-F00023-R001",
+  "invoice_date": "2026-01-21",
+  "due_date": null,
+  "total_amount": 150.00,
+  "net_amount": null,
+  "tax_amount": null,
+  "currency": "EUR",
+  "vendor_name": "Dr. med. Björn Micka",
+  "vendor_address": null,
+  "customer_name": "Erkan Ökcü"
+}}
 
-WICHTIG:
-- Beträge als Zahlen (nicht Strings!)
-- Falls nicht gefunden: null
-- Datum: YYYY-MM-DD"""
+REGELN:
+- Beträge als Zahlen (150.00 nicht "150.00")
+- Wenn Feld nicht gefunden: null (nicht weglassen!)
+- Datum: YYYY-MM-DD Format
+- ALLE 14 Felder MÜSSEN im JSON sein"""
 
         return prompt
 
