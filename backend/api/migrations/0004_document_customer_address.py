@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0003_add_invoice_extraction_fields'),
+        ('api', '0003_invoice_data_extraction'),
     ]
 
     operations = [
