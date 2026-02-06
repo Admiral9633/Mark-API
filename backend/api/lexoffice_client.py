@@ -4,6 +4,7 @@ Lexoffice API client for uploading vouchers (invoices)
 import os
 import logging
 import requests
+import time
 from typing import Optional, Dict
 
 logger = logging.getLogger(__name__)
@@ -187,20 +188,34 @@ class LexofficeClient:
             # Remove None values
             voucher_payload = {k: v for k, v in voucher_payload.items() if v is not None}
             
-            # Update voucher via Lexoffice API
-            response = requests.put(
-                f"{self.api_url}/v1/vouchers/{voucher_id}",
-                headers={**self.headers, "Content-Type": "application/json"},
-                json=voucher_payload,
-                timeout=30
-            )
+            # Update voucher via Lexoffice API with retry logic
+            max_retries = 3
+            retry_delay = 2  # seconds
             
-            if response.status_code == 200:
-                logger.info(f"Voucher {voucher_id} successfully updated with extracted data")
-                return True
-            else:
-                logger.warning(f"Voucher update failed: {response.status_code} - {response.text}")
-                return False
+            for attempt in range(max_retries):
+                response = requests.put(
+                    f"{self.api_url}/v1/vouchers/{voucher_id}",
+                    headers={**self.headers, "Content-Type": "application/json"},
+                    json=voucher_payload,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"Voucher {voucher_id} successfully updated with extracted data")
+                    return True
+                elif response.status_code == 429:  # Rate limit
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+                        logger.warning(f"Rate limit hit, waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                        time.sleep(wait_time)
+                    else:
+                        logger.error(f"Rate limit exceeded after {max_retries} retries")
+                        return False
+                else:
+                    logger.warning(f"Voucher update failed: {response.status_code} - {response.text}")
+                    return False
+            
+            return True
                 
         except Exception as e:
             logger.error(f"Error updating voucher data: {e}")
