@@ -45,8 +45,11 @@ class OllamaClassifier:
     """Classify documents using local Ollama AI"""
 
     def __init__(self):
-        self.api_url = OLLAMA_API_URL
-        # FORCE qwen2.5:7b model
+        # Read API URL at runtime, fallback to NAS host IP
+        self.api_url = os.getenv("OLLAMA_API_URL", "http://192.168.178.84:11434")
+        print(f"[OLLAMA INIT] API URL: {self.api_url}")
+
+        # FORCE qwen2.5:7b model for reliable extraction
         self.model = "qwen2.5:7b"
         print(f"[OLLAMA INIT] FORCED model: {self.model}")
 
