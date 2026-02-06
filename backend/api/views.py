@@ -121,20 +121,25 @@ class DocumentViewSet(viewsets.ModelViewSet):
                     
                     # Wenn Rechnung erkannt wurde, zu Lexoffice hochladen
                     if document.is_invoice:
-                        print(f"[LEXOFFICE] Rechnung erkannt, starte Upload mit vorausgefüllten Daten")
+                        print(f"[LEXOFFICE] Rechnung erkannt, starte Upload")
                         try:
                             lexoffice_client = LexofficeClient()
                             
-                            # Prepare invoice data for Lexoffice
-                            invoice_data = {
-                                'invoice_number': document.invoice_number,
-                                'invoice_date': str(document.invoice_date) if document.invoice_date else None,
-                                'due_date': str(document.due_date) if document.due_date else None,
-                                'total_amount': float(document.total_amount) if document.total_amount else None,
-                                'net_amount': float(document.net_amount) if document.net_amount else None,
-                                'tax_amount': float(document.tax_amount) if document.tax_amount else None,
-                                'vendor_name': document.vendor_name,
-                            }
+                            # Nur invoice_data übergeben, wenn mindestens einige Felder extrahiert wurden
+                            invoice_data = None
+                            if document.invoice_number or document.total_amount or document.vendor_name:
+                                invoice_data = {
+                                    'invoice_number': document.invoice_number,
+                                    'invoice_date': str(document.invoice_date) if document.invoice_date else None,
+                                    'due_date': str(document.due_date) if document.due_date else None,
+                                    'total_amount': float(document.total_amount) if document.total_amount else None,
+                                    'net_amount': float(document.net_amount) if document.net_amount else None,
+                                    'tax_amount': float(document.tax_amount) if document.tax_amount else None,
+                                    'vendor_name': document.vendor_name,
+                                }
+                                print(f"[LEXOFFICE] Sende mit extrahierten Daten: {invoice_data}")
+                            else:
+                                print(f"[LEXOFFICE] Keine Daten extrahiert, lade nur PDF hoch")
                             
                             upload_result = lexoffice_client.upload_voucher(
                                 document.pdf_file.path,

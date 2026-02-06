@@ -84,37 +84,41 @@ class OllamaClassifier:
 
     def _build_classification_prompt(self, text: str) -> str:
         """Build the classification prompt for Ollama"""
-        # Truncate text if too long (keep first 2000 characters)
-        text_sample = text[:2000] if len(text) > 2000 else text
+        # Use more text for better extraction (first 2500 characters)
+        text_sample = text[:2500] if len(text) > 2500 else text
         
-        prompt = f"""Extrahiere Rechnungsdaten aus diesem Dokument. Antworte NUR mit JSON.
+        prompt = f"""Extrahiere Rechnungsdaten aus diesem Dokument. Antworte NUR mit JSON, keine zusätzlichen Texte.
 
-Text:
+DOKUMENT:
 {text_sample}
 
-JSON Format:
+AUFGABE:
+1. Prüfe ob dies eine Rechnung ist
+2. Typ: "incoming" wenn ich bezahlen muss, "outgoing" wenn ich der Absender bin
+3. Extrahiere: Rechnungsnummer, Datum, Betrag (als Zahl!), Lieferant/Kunde
+
+JSON ANTWORT:
 {{
-  "is_invoice": true/false,
-  "invoice_type": "incoming"|"outgoing"|null,
-  "confidence": 0.0-1.0,
-  "reasoning": "kurz",
-  "invoice_number": "RE-123" oder null,
-  "invoice_date": "2024-01-26" oder null,
-  "due_date": "2024-02-26" oder null,
-  "total_amount": 123.45 oder null,
-  "net_amount": 100.00 oder null,
-  "tax_amount": 23.45 oder null,
-  "currency": "EUR" oder null,
-  "vendor_name": "Firma" oder null,
-  "vendor_address": "Adresse" oder null,
-  "customer_name": "Kunde" oder null
+  "is_invoice": true,
+  "invoice_type": "incoming",
+  "confidence": 0.9,
+  "reasoning": "Enthält Rechnungsnummer und Betrag",
+  "invoice_number": "RE-2024-001",
+  "invoice_date": "2024-01-26",
+  "due_date": "2024-02-26",
+  "total_amount": 1234.56,
+  "net_amount": 1000.00,
+  "tax_amount": 234.56,
+  "currency": "EUR",
+  "vendor_name": "Musterfirma GmbH",
+  "vendor_address": "Musterstraße 1, 12345 Stadt",
+  "customer_name": "Kunde XY"
 }}
 
-Regeln:
-- incoming = ich muss bezahlen
-- outgoing = ich habe geschrieben
-- Alle Beträge als Dezimalzahl
-- Datum im Format YYYY-MM-DD"""
+WICHTIG:
+- total_amount, net_amount, tax_amount sind ZAHLEN (nicht Strings!)
+- Datum Format: YYYY-MM-DD
+- Falls Feld nicht gefunden: null (nicht "null" als String!)"""
 
         return prompt
 
