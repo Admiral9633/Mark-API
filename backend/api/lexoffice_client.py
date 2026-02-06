@@ -309,20 +309,35 @@ class LexofficeClient:
                     "billing": [address_data]
                 }
             
-            create_response = requests.post(
-                f"{self.api_url}/v1/contacts",
-                headers={**self.headers, "Content-Type": "application/json"},
-                json=contact_payload,
-                timeout=10
-            )
+            # Create contact with retry logic for rate limits
+            max_retries = 3
+            retry_delay = 2
             
-            if create_response.status_code == 200:
-                contact_id = create_response.json().get("id")
-                logger.info(f"Created new contact: {contact_name} (ID: {contact_id})")
-                return contact_id
-            else:
-                logger.error(f"Failed to create contact: {create_response.status_code} - {create_response.text}")
-                return None
+            for attempt in range(max_retries):
+                create_response = requests.post(
+                    f"{self.api_url}/v1/contacts",
+                    headers={**self.headers, "Content-Type": "application/json"},
+                    json=contact_payload,
+                    timeout=10
+                )
+                
+                if create_response.status_code == 200:
+                    contact_id = create_response.json().get("id")
+                    logger.info(f"Created new contact: {contact_name} (ID: {contact_id})")
+                    return contact_id
+                elif create_response.status_code == 429:  # Rate limit
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)
+                        logger.warning(f"Rate limit hit when creating contact, waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                        time.sleep(wait_time)
+                    else:
+                        logger.error(f"Failed to create contact after {max_retries} retries: Rate limit exceeded")
+                        return None
+                else:
+                    logger.error(f"Failed to create contact: {create_response.status_code} - {create_response.text}")
+                    return None
+            
+            return None
                 
         except Exception as e:
             logger.error(f"Error in get_or_create_contact: {e}")
