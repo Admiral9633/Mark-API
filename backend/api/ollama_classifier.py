@@ -46,9 +46,9 @@ class OllamaClassifier:
 
     def __init__(self):
         self.api_url = OLLAMA_API_URL
-        # Read model dynamically from .env file
-        self.model = get_ollama_model()
-        print(f"[OLLAMA INIT] Using model: {self.model}")
+        # FORCE qwen2.5:7b model
+        self.model = "qwen2.5:7b"
+        print(f"[OLLAMA INIT] FORCED model: {self.model}")
 
     def classify_document(self, markdown_text: str) -> Dict:
         """
