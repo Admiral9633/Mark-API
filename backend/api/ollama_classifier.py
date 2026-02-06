@@ -10,7 +10,6 @@ from typing import Dict, Optional
 logger = logging.getLogger(__name__)
 
 OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://host.docker.internal:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
 
 class OllamaClassifier:
@@ -18,7 +17,8 @@ class OllamaClassifier:
 
     def __init__(self):
         self.api_url = OLLAMA_API_URL
-        self.model = OLLAMA_MODEL
+        # Read model dynamically instead of at module load
+        self.model = os.getenv("OLLAMA_MODEL", "llama3.2")
 
     def classify_document(self, markdown_text: str) -> Dict:
         """
