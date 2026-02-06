@@ -1,0 +1,41 @@
+# Docker Compose Konfiguration für NAS mit Ollama
+# Verwendung: docker-compose -f docker-compose.yml -f docker-compose.nas.yml up -d
+
+version: '3.8'
+
+services:
+  # Ollama AI für Invoice Classification
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pdf_ocr_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - pdf_ocr_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend mit Ollama Verbindung
+  backend:
+    environment:
+      - OLLAMA_API_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2
+      - LEXOFFICE_API_KEY=${LEXOFFICE_API_KEY}
+      - LEXOFFICE_API_URL=https://api.lexware.io
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  pdf_ocr_network:
+    external: true
