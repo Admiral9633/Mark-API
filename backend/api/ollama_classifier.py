@@ -48,10 +48,10 @@ class OllamaClassifier:
                     "format": "json",
                     "options": {
                         "temperature": 0,
-                        "num_predict": 200
+                        "num_predict": 150
                     }
                 },
-                timeout=180
+                timeout=300
             )
             
             if response.status_code != 200:
@@ -106,10 +106,10 @@ class OllamaClassifier:
                     "format": "json",
                     "options": {
                         "temperature": 0,
-                        "num_predict": 400
+                        "num_predict": 350
                     }
                 },
-                timeout=240
+                timeout=360
             )
             
             if response.status_code != 200:
@@ -136,31 +136,25 @@ class OllamaClassifier:
 
     def _build_classification_prompt(self, text: str) -> str:
         """Build SIMPLE classification prompt (no extraction)"""
-        text_sample = text[:2000] if len(text) > 2000 else text
+        text_sample = text[:1500] if len(text) > 1500 else text
         
-        prompt = f"""Du bist Rechnungs-Erkennungs-Experte. Analysiere NUR ob dies eine Rechnung ist.
+        prompt = f"""Ist dies eine Rechnung?
 
-DOKUMENT:
+Text:
 {text_sample}
 
-AUFGABEN:
-1. Ist dies eine Rechnung? Suche: "Rechnung", "Invoice", "RE-", Rechnungsnummer
-2. Typ bestimmen:
-   - "outgoing": Absender "Dr. med. Björn Micka" → ICH schreibe Rechnung
-   - "incoming": Andere Firma → ICH bezahle
+Antwort als JSON:
+- is_invoice: true/false (suche "Rechnung", "Invoice", "RE-")
+- invoice_type: "outgoing" wenn von "Dr. med. Björn Micka", sonst "incoming"
+- confidence: 0.0-1.0
+- reasoning: kurze Begründung
 
-JSON Format:
-{{
-  "is_invoice": true,
-  "invoice_type": "outgoing",
-  "confidence": 0.95,
-  "reasoning": "Rechnung RE-123 von Dr. Micka gefunden"
-}}"""
+Beispiel: {{"is_invoice": true, "invoice_type": "outgoing", "confidence": 0.9, "reasoning": "Rechnung gefunden"}}"""
         return prompt
 
     def _build_extraction_prompt(self, text: str, invoice_type: str) -> str:
         """Build focused extraction prompt"""
-        text_sample = text[:3000] if len(text) > 3000 else text
+        text_sample = text[:2000] if len(text) > 2000 else text
         
         if invoice_type == "outgoing":
             vendor_hint = "Dr. med. Björn Micka"
