@@ -47,7 +47,7 @@ class OllamaClassifier:
                     "stream": False,
                     "format": "json"
                 },
-                timeout=30
+                timeout=120
             )
             
             if response.status_code != 200:
