@@ -80,11 +80,13 @@ class LexofficeClient:
                     contact_id = None
                     if doc_invoice_type == "outgoing":
                         contact_name = invoice_data.get("customer_name")
+                        contact_address = None  # Customers don't have address in our extraction
                     else:
                         contact_name = invoice_data.get("vendor_name")
+                        contact_address = invoice_data.get("vendor_address")
                     
                     if contact_name:
-                        contact_id = self._get_or_create_contact(contact_name, doc_invoice_type)
+                        contact_id = self._get_or_create_contact(contact_name, doc_invoice_type, contact_address)
                     
                     update_success = self._update_voucher_data(voucher_id, file_id, invoice_data, doc_invoice_type, contact_id)
                     if not update_success:
@@ -236,13 +238,14 @@ class LexofficeClient:
         except:
             return 19
 
-    def _get_or_create_contact(self, contact_name: str, invoice_type: str) -> Optional[str]:
+    def _get_or_create_contact(self, contact_name: str, invoice_type: str, contact_address: str = None) -> Optional[str]:
         """
         Search for existing contact or create new one
         
         Args:
             contact_name: Name of the contact to search/create
             invoice_type: 'incoming' or 'outgoing'
+            contact_address: Full address string (e.g., "Straße 1, 12345 Stadt")
             
         Returns:
             Contact ID if found/created, None otherwise
@@ -280,6 +283,31 @@ class LexofficeClient:
                     "name": contact_name
                 }
             }
+            
+            # Add address if provided
+            if contact_address:
+                # Parse address (simple split on comma)
+                address_parts = [part.strip() for part in contact_address.split(',')]
+                
+                address_data = {}
+                if len(address_parts) >= 1:
+                    # First part is usually street
+                    address_data["street"] = address_parts[0]
+                if len(address_parts) >= 2:
+                    # Try to extract zip and city from last part
+                    last_part = address_parts[-1].strip()
+                    parts = last_part.split(' ', 1)
+                    if len(parts) == 2:
+                        address_data["zip"] = parts[0]
+                        address_data["city"] = parts[1]
+                    else:
+                        address_data["city"] = last_part
+                
+                address_data["countryCode"] = "DE"
+                
+                contact_payload["addresses"] = {
+                    "billing": [address_data]
+                }
             
             create_response = requests.post(
                 f"{self.api_url}/v1/contacts",
