@@ -138,18 +138,27 @@ class OllamaClassifier:
         """Build SIMPLE classification prompt (no extraction)"""
         text_sample = text[:1500] if len(text) > 1500 else text
         
-        prompt = f"""Ist dies eine Rechnung?
+        prompt = f"""AUFGABE: Klassifiziere diese Rechnung.
 
-Text:
+TEXT:
 {text_sample}
 
-Antwort als JSON:
-- is_invoice: true/false (suche "Rechnung", "Invoice", "RE-")
-- invoice_type: "outgoing" wenn von "Dr. med. Björn Micka", sonst "incoming"
-- confidence: 0.0-1.0
-- reasoning: kurze Begründung
+REGELN:
+1. is_invoice = true wenn Text "Rechnung", "Invoice" oder "RE-" enthält
+2. invoice_type:
+   - WENN Text "An IMO" oder "An CompuGroup" ODER "Empfänger:" enthält:
+     → invoice_type = "outgoing" (Dr. Micka schreibt AN Kunden = Einnahme)
+   - WENN Text "Von IMO" oder "Absender: CompuGroup" enthält:
+     → invoice_type = "incoming" (Dr. Micka erhält VON Lieferant = Ausgabe)
+   - EINFACHE REGEL: Steht "Dr. med. Björn Micka" VOR dem Firmennamen = outgoing
 
-Beispiel: {{"is_invoice": true, "invoice_type": "outgoing", "confidence": 0.9, "reasoning": "Rechnung gefunden"}}"""
+BEISPIEL OUTGOING:
+"Dr. med. Björn Micka\nAn IMO GmbH" → outgoing (Micka schreibt AN IMO)
+
+BEISPIEL INCOMING:
+"CompuGroup Medical\nAn Dr. med. Björn Micka" → incoming (CompuGroup schreibt AN Micka)
+
+JSON: {{"is_invoice": true, "invoice_type": "outgoing", "confidence": 0.95, "reasoning": "Dr. Micka schreibt AN IMO"}}"""
         return prompt
 
     def _build_extraction_prompt(self, text: str, invoice_type: str) -> str:
@@ -157,42 +166,35 @@ Beispiel: {{"is_invoice": true, "invoice_type": "outgoing", "confidence": 0.9, "
         text_sample = text[:2000] if len(text) > 2000 else text
         
         if invoice_type == "outgoing":
-            vendor_hint = "Dr. med. Björn Micka"
-            customer_hint = "Empfänger im Dokument"
+            vendor_hint = "Dr. med. Björn Micka (DER ABSENDER)"
+            customer_hint = "SUCHE Empfänger nach 'An' (z.B. 'An IMO GmbH')"
         else:
-            vendor_hint = "Absender/Lieferant im Dokument"
-            customer_hint = "Dr. med. Björn Micka"
+            vendor_hint = "SUCHE Absender/Lieferant (Firma die Rechnung schickt)"
+            customer_hint = "Dr. med. Björn Micka (DER EMPFÄNGER)"
         
-        prompt = f"""Extrahiere alle Daten aus dieser Rechnung. Sei präzise.
+        prompt = f"""Extrahiere ALLE Daten aus dieser {invoice_type.upper()} Rechnung.
 
-DOKUMENT:
+TEXT:
 {text_sample}
 
-EXTRAHIERE:
-- invoice_number: Rechnungsnummer (z.B. "2026-F00023-R001")
-- invoice_date: Rechnungsdatum (Format: YYYY-MM-DD)
-- due_date: Fälligkeitsdatum (Format: YYYY-MM-DD)
-- total_amount: Gesamtbetrag (Zahl, z.B. 150.00)
-- net_amount: Nettobetrag
-- tax_amount: MwSt-Betrag
-- currency: Währung (meist "EUR")
+WICHTIG - {invoice_type.upper()} Rechnung bedeutet:
 - vendor_name: {vendor_hint}
-- vendor_address: Vollständige Adresse des Absenders
 - customer_name: {customer_hint}
 
-JSON Format (nutze null wenn nicht gefunden):
-{{
-  "invoice_number": "2026-F00023-R001",
-  "invoice_date": "2026-01-21",
-  "due_date": null,
-  "total_amount": 150.00,
-  "net_amount": null,
-  "tax_amount": null,
-  "currency": "EUR",
-  "vendor_name": "Dr. med. Björn Micka",
-  "vendor_address": "Musterstr. 1, 12345 Stadt",
-  "customer_name": "Max Mustermann"
-}}"""
+EXTRAHIERE:
+- invoice_number: Rechnungsnummer (bei "Rechnung", z.B. "2026-F00016-R001")
+- invoice_date: Datum (Format YYYY-MM-DD, z.B. "2026-01-13")
+- due_date: Fälligkeitsdatum
+- total_amount: Endbetrag als ZAHL (z.B. 13199.06)
+- net_amount: Nettobetrag
+- tax_amount: MwSt-Betrag
+- currency: "EUR"
+- vendor_name: {vendor_hint}
+- vendor_address: Vollständige Adresse
+- customer_name: {customer_hint}
+
+JSON (null wenn nicht gefunden):
+{{"invoice_number": "2026-F00016-R001", "invoice_date": "2026-01-13", "due_date": null, "total_amount": 13199.06, "net_amount": 11162.06, "tax_amount": 2037.00, "currency": "EUR", "vendor_name": "Dr. med. Björn Micka", "vendor_address": "Christoph-Dassler-Str. 22, 91074 Herzogenaurach", "customer_name": "IMO GmbH & Co. KG"}}"""
         return prompt
 
     def _default_classification(self) -> Dict:
