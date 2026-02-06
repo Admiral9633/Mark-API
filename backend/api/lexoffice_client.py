@@ -160,9 +160,18 @@ class LexofficeClient:
                 "files": [file_id]
             }
             
-            # Add vendor/contact info if available
-            if invoice_data.get("vendor_name"):
-                voucher_payload["contactName"] = invoice_data.get("vendor_name")
+            # Add contact info based on invoice type
+            # For salesinvoice (outgoing): customer is the contact
+            # For purchaseinvoice (incoming): vendor is the contact
+            if doc_invoice_type == "outgoing":
+                # Ausgangsrechnung: Kunde ist der Kontakt
+                contact_name = invoice_data.get("customer_name") or invoice_data.get("vendor_name")
+            else:
+                # Eingangsrechnung: Lieferant ist der Kontakt
+                contact_name = invoice_data.get("vendor_name")
+            
+            if contact_name:
+                voucher_payload["contactName"] = contact_name
             
             # Remove None values
             voucher_payload = {k: v for k, v in voucher_payload.items() if v is not None}

@@ -142,7 +142,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
                             
                             # Nur invoice_data übergeben, wenn mindestens einige Felder extrahiert wurden
                             invoice_data = None
-                            if document.invoice_number or document.total_amount or document.vendor_name:
+                            if document.invoice_number or document.total_amount or document.vendor_name or document.customer_name:
                                 invoice_data = {
                                     'invoice_number': document.invoice_number,
                                     'invoice_date': str(document.invoice_date) if document.invoice_date else None,
@@ -151,6 +151,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
                                     'net_amount': float(document.net_amount) if document.net_amount else None,
                                     'tax_amount': float(document.tax_amount) if document.tax_amount else None,
                                     'vendor_name': document.vendor_name,
+                                    'customer_name': document.customer_name,
                                 }
                                 print(f"[LEXOFFICE] Sende mit extrahierten Daten: {invoice_data}")
                             else:
