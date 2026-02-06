@@ -7,10 +7,14 @@ class DocumentSerializer(serializers.ModelSerializer):
         fields = ['id', 'created_at', 'updated_at', 'original_filename',
                   'pdf_file', 'marker_markdown', 'marker_json', 'status', 'error_message',
                   'ai_classification', 'is_invoice', 'invoice_type',
+                  'invoice_number', 'invoice_date', 'due_date', 'total_amount', 'net_amount',
+                  'tax_amount', 'currency', 'vendor_name', 'vendor_address', 'customer_name',
                   'lexoffice_sent', 'lexoffice_file_id', 'lexoffice_voucher_id', 'lexoffice_error']
         read_only_fields = ['id', 'created_at', 'updated_at', 'marker_markdown',
                            'marker_json', 'status', 'error_message',
                            'ai_classification', 'is_invoice', 'invoice_type',
+                           'invoice_number', 'invoice_date', 'due_date', 'total_amount', 'net_amount',
+                           'tax_amount', 'currency', 'vendor_name', 'vendor_address', 'customer_name',
                            'lexoffice_sent', 'lexoffice_file_id', 'lexoffice_voucher_id', 'lexoffice_error']
 
 class DocumentUploadSerializer(serializers.Serializer):

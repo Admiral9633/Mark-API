@@ -26,6 +26,18 @@ class Document(models.Model):
         help_text="Type of invoice: incoming or outgoing"
     )
 
+    # Extracted Invoice Data
+    invoice_number = models.CharField(max_length=100, blank=True, null=True, help_text="Rechnungsnummer")
+    invoice_date = models.DateField(blank=True, null=True, help_text="Rechnungsdatum")
+    due_date = models.DateField(blank=True, null=True, help_text="Fälligkeitsdatum")
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Gesamtbetrag brutto")
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Nettobetrag")
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Umsatzsteuer")
+    currency = models.CharField(max_length=3, default='EUR', help_text="Währung")
+    vendor_name = models.CharField(max_length=255, blank=True, null=True, help_text="Lieferant/Absender")
+    vendor_address = models.TextField(blank=True, null=True, help_text="Lieferantenadresse")
+    customer_name = models.CharField(max_length=255, blank=True, null=True, help_text="Kunde/Empfänger")
+
     # Lexoffice Integration
     lexoffice_sent = models.BooleanField(default=False, help_text="Uploaded to Lexoffice")
     lexoffice_file_id = models.CharField(max_length=100, blank=True, null=True, help_text="Lexoffice file ID")

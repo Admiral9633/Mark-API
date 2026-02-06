@@ -99,18 +99,47 @@ class DocumentViewSet(viewsets.ModelViewSet):
                     document.ai_classification = classification
                     document.is_invoice = classification.get('is_invoice', False)
                     document.invoice_type = classification.get('invoice_type')
+                    
+                    # Speichere extrahierte Rechnungsdaten
+                    if document.is_invoice:
+                        document.invoice_number = classification.get('invoice_number')
+                        document.invoice_date = classification.get('invoice_date')
+                        document.due_date = classification.get('due_date')
+                        document.total_amount = classification.get('total_amount')
+                        document.net_amount = classification.get('net_amount')
+                        document.tax_amount = classification.get('tax_amount')
+                        document.currency = classification.get('currency') or 'EUR'
+                        document.vendor_name = classification.get('vendor_name')
+                        document.vendor_address = classification.get('vendor_address')
+                        document.customer_name = classification.get('customer_name')
+                    
                     document.save()
                     
                     print(f"[AI] Klassifizierung abgeschlossen: is_invoice={document.is_invoice}, type={document.invoice_type}")
+                    if document.is_invoice:
+                        print(f"[AI] Extrahierte Daten: RE-Nr={document.invoice_number}, Betrag={document.total_amount}, Lieferant={document.vendor_name}")
                     
                     # Wenn Rechnung erkannt wurde, zu Lexoffice hochladen
                     if document.is_invoice:
-                        print(f"[LEXOFFICE] Rechnung erkannt, starte Upload")
+                        print(f"[LEXOFFICE] Rechnung erkannt, starte Upload mit vorausgefüllten Daten")
                         try:
                             lexoffice_client = LexofficeClient()
+                            
+                            # Prepare invoice data for Lexoffice
+                            invoice_data = {
+                                'invoice_number': document.invoice_number,
+                                'invoice_date': str(document.invoice_date) if document.invoice_date else None,
+                                'due_date': str(document.due_date) if document.due_date else None,
+                                'total_amount': float(document.total_amount) if document.total_amount else None,
+                                'net_amount': float(document.net_amount) if document.net_amount else None,
+                                'tax_amount': float(document.tax_amount) if document.tax_amount else None,
+                                'vendor_name': document.vendor_name,
+                            }
+                            
                             upload_result = lexoffice_client.upload_voucher(
                                 document.pdf_file.path,
-                                voucher_type='voucher'
+                                voucher_type='voucher',
+                                invoice_data=invoice_data
                             )
                             
                             if upload_result.get('success'):

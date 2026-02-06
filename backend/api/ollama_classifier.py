@@ -80,10 +80,10 @@ class OllamaClassifier:
 
     def _build_classification_prompt(self, text: str) -> str:
         """Build the classification prompt for Ollama"""
-        # Truncate text if too long (keep first 2000 characters)
-        text_sample = text[:2000] if len(text) > 2000 else text
+        # Truncate text if too long (keep first 3000 characters for better extraction)
+        text_sample = text[:3000] if len(text) > 3000 else text
         
-        prompt = f"""Analysiere das folgende Dokument und klassifiziere es. 
+        prompt = f"""Analysiere das folgende Dokument und extrahiere alle relevanten Rechnungsdaten. 
 Antworte NUR mit einem JSON-Objekt (keine Erklärungen davor oder danach).
 
 Dokumententext:
@@ -91,19 +91,39 @@ Dokumententext:
 
 Aufgaben:
 1. Ist dies eine Rechnung? (is_invoice: true/false)
-2. Wenn ja, ist es eine eingehende Rechnung (die ich bezahlen muss) oder eine ausgehende Rechnung (die ich geschrieben habe)?
-   - "incoming": Rechnung von einem Lieferanten/Dienstleister an mich (z.B. Hornbach, Edeka, DATEV)
-   - "outgoing": Rechnung die ich an einen Kunden geschrieben habe (enthält meine Firmendaten als Absender)
+2. Wenn ja, ist es eine eingehende oder ausgehende Rechnung?
+   - "incoming": Rechnung von einem Lieferanten an mich (ich muss bezahlen)
+   - "outgoing": Rechnung die ich an einen Kunden geschrieben habe
    - null: Wenn es keine Rechnung ist
 
-3. Confidence (0.0 - 1.0): Wie sicher bist du?
+3. Extrahiere folgende Daten (nur wenn is_invoice=true):
+   - invoice_number: Rechnungsnummer (string oder null)
+   - invoice_date: Rechnungsdatum im Format YYYY-MM-DD (string oder null)
+   - due_date: Fälligkeitsdatum im Format YYYY-MM-DD (string oder null)
+   - total_amount: Gesamtbetrag brutto als Zahl (float oder null)
+   - net_amount: Nettobetrag als Zahl (float oder null)
+   - tax_amount: Umsatzsteuerbetrag als Zahl (float oder null)
+   - currency: Währung (z.B. "EUR", string oder null)
+   - vendor_name: Name des Lieferanten/Absenders (string oder null)
+   - vendor_address: Adresse des Lieferanten (string oder null)
+   - customer_name: Name des Kunden/Empfängers (string oder null)
 
 Antworte im folgenden JSON-Format:
 {{
   "is_invoice": true/false,
   "invoice_type": "incoming"|"outgoing"|null,
   "confidence": 0.0-1.0,
-  "reasoning": "Kurze Begründung"
+  "reasoning": "Kurze Begründung",
+  "invoice_number": "RE-12345" oder null,
+  "invoice_date": "2024-05-10" oder null,
+  "due_date": "2024-06-10" oder null,
+  "total_amount": 123.45 oder null,
+  "net_amount": 103.78 oder null,
+  "tax_amount": 19.67 oder null,
+  "currency": "EUR" oder null,
+  "vendor_name": "Firmenname GmbH" oder null,
+  "vendor_address": "Straße, PLZ Ort" oder null,
+  "customer_name": "Kundenname" oder null
 }}"""
 
         return prompt
