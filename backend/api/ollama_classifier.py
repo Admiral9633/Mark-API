@@ -96,6 +96,8 @@ class OllamaClassifier:
         try:
             prompt = self._build_extraction_prompt(markdown_text, invoice_type)
             
+            logger.info(f"Calling Ollama for extraction with model {self.model}")
+            
             # Call Ollama API for data extraction
             response = requests.post(
                 f"{self.api_url}/api/generate",
@@ -112,8 +114,10 @@ class OllamaClassifier:
                 timeout=360
             )
             
+            logger.info(f"Ollama extraction response status: {response.status_code}")
+            
             if response.status_code != 200:
-                logger.error(f"Ollama extraction API error: {response.status_code}")
+                logger.error(f"Ollama extraction API error: {response.status_code} - {response.text}")
                 return {}
             
             result = response.json()
