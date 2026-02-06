@@ -6,8 +6,21 @@ import json
 import logging
 import requests
 from typing import Dict, Optional
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Force reload environment variables from .env file
+def get_ollama_model():
+    """Read OLLAMA_MODEL from .env file or environment"""
+    # Try to read from .env file first
+    env_file = Path("/app") / ".env"
+    if env_file.exists():
+        with open(env_file) as f:
+            for line in f:
+                if line.startswith("OLLAMA_MODEL="):
+                    return line.split("=", 1)[1].strip()
+    return os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 
 OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://host.docker.internal:11434")
 
@@ -17,8 +30,9 @@ class OllamaClassifier:
 
     def __init__(self):
         self.api_url = OLLAMA_API_URL
-        # Read model dynamically instead of at module load
-        self.model = os.getenv("OLLAMA_MODEL", "llama3.2")
+        # Read model dynamically from .env file
+        self.model = get_ollama_model()
+        print(f"[OLLAMA INIT] Using model: {self.model}")
 
     def classify_document(self, markdown_text: str) -> Dict:
         """
