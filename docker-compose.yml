@@ -55,7 +55,9 @@ services:
 
   # Marker-API für OCR (AI-Modelle)
   marker-api:
-    image: ghcr.io/adithya-s-k/marker-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.marker-api
     container_name: pdf_ocr_marker
     restart: unless-stopped
     environment:
