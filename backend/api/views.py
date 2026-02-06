@@ -73,7 +73,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 response = requests.post(
                     f"{MARKER_API_URL}/convert",
                     files=files,
-                    timeout=180  # 3 Minuten Timeout
+                    timeout=600  # 10 Minuten Timeout für große PDFs
                 )
             
             if response.status_code == 200:
@@ -95,7 +95,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 raise Exception(f"Marker-API Error: {response.status_code} - {response.text}")
                     
         except requests.exceptions.Timeout:
-            error_msg = "Marker-API Timeout nach 3 Minuten"
+            error_msg = "Marker-API Timeout nach 10 Minuten"
             print(f"[OCR] {error_msg}")
             document.status = 'error'
             document.error_message = error_msg
