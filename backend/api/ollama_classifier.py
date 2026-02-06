@@ -96,7 +96,7 @@ class OllamaClassifier:
         try:
             prompt = self._build_extraction_prompt(markdown_text, invoice_type)
             
-            logger.info(f"Calling Ollama for extraction with model {self.model}")
+            print(f"[OLLAMA] Calling API for extraction with model {self.model}")
             
             # Call Ollama API for data extraction
             response = requests.post(
@@ -114,24 +114,24 @@ class OllamaClassifier:
                 timeout=360
             )
             
-            logger.info(f"Ollama extraction response status: {response.status_code}")
+            print(f"[OLLAMA] Extraction response status: {response.status_code}")
             
             if response.status_code != 200:
-                logger.error(f"Ollama extraction API error: {response.status_code} - {response.text}")
+                print(f"[OLLAMA] API error: {response.status_code} - {response.text[:200]}")
                 return {}
             
             result = response.json()
             ai_response = result.get("response", "{}")
             
-            logger.info(f"Raw AI extraction response (first 500 chars): {ai_response[:500]}")
+            print(f"[OLLAMA] Raw AI response (first 300 chars): {ai_response[:300]}")
             
             try:
                 extracted = json.loads(ai_response)
-                logger.info(f"Extracted invoice data: {extracted}")
+                print(f"[OLLAMA] Successfully parsed JSON, keys: {list(extracted.keys())}")
                 return extracted
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse extraction response: {e}")
-                logger.error(f"Full AI response: {ai_response}")
+                print(f"[OLLAMA] JSON parse error: {e}")
+                print(f"[OLLAMA] Full response: {ai_response}")
                 return {}
                 
         except requests.exceptions.RequestException as e:
