@@ -108,10 +108,17 @@ class DocumentViewSet(viewsets.ModelViewSet):
                     # STEP 2: Extract invoice data only if is_invoice=True (focused, ~2-3 minutes)
                     if document.is_invoice and document.invoice_type:
                         print(f"[AI] Starte Datenextraktion für {document.invoice_type} Rechnung")
-                        extracted_data = classifier.extract_invoice_data(
-                            document.marker_markdown,
-                            document.invoice_type
-                        )
+                        try:
+                            extracted_data = classifier.extract_invoice_data(
+                                document.marker_markdown,
+                                document.invoice_type
+                            )
+                            print(f"[AI] extract_invoice_data returned: type={type(extracted_data)}, content={extracted_data}")
+                        except Exception as e:
+                            print(f"[AI] EXCEPTION during extraction: {type(e).__name__}: {e}")
+                            import traceback
+                            traceback.print_exc()
+                            extracted_data = {}
                         
                         if extracted_data:
                             # Speichere extrahierte Daten
