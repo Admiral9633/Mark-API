@@ -80,7 +80,7 @@ class LexofficeClient:
                     contact_id = None
                     if doc_invoice_type == "outgoing":
                         contact_name = invoice_data.get("customer_name")
-                        contact_address = None  # Customers don't have address in our extraction
+                        contact_address = invoice_data.get("customer_address")
                     else:
                         contact_name = invoice_data.get("vendor_name")
                         contact_address = invoice_data.get("vendor_address")

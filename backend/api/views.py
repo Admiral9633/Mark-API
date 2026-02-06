@@ -125,6 +125,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
                             document.vendor_name = extracted_data.get('vendor_name')
                             document.vendor_address = extracted_data.get('vendor_address')
                             document.customer_name = extracted_data.get('customer_name')
+                            document.customer_address = extracted_data.get('customer_address')
                             
                             # Update ai_classification mit extrahierten Daten
                             document.ai_classification.update(extracted_data)
@@ -151,7 +152,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
                                     'net_amount': float(document.net_amount) if document.net_amount else None,
                                     'tax_amount': float(document.tax_amount) if document.tax_amount else None,
                                     'vendor_name': document.vendor_name,
+                                    'vendor_address': document.vendor_address,
                                     'customer_name': document.customer_name,
+                                    'customer_address': document.customer_address,
                                 }
                                 print(f"[LEXOFFICE] Sende mit extrahierten Daten: {invoice_data}")
                             else:

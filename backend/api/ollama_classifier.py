@@ -190,11 +190,12 @@ EXTRAHIERE:
 - tax_amount: MwSt-Betrag
 - currency: "EUR"
 - vendor_name: {vendor_hint}
-- vendor_address: Vollständige Adresse
+- vendor_address: Vollständige Adresse des Lieferanten
 - customer_name: {customer_hint}
+- customer_address: Vollständige Adresse des Kunden
 
 JSON (null wenn nicht gefunden):
-{{"invoice_number": "2026-F00016-R001", "invoice_date": "2026-01-13", "due_date": null, "total_amount": 13199.06, "net_amount": 11162.06, "tax_amount": 2037.00, "currency": "EUR", "vendor_name": "Dr. med. Björn Micka", "vendor_address": "Christoph-Dassler-Str. 22, 91074 Herzogenaurach", "customer_name": "IMO GmbH & Co. KG"}}"""
+{{"invoice_number": "2026-F00016-R001", "invoice_date": "2026-01-13", "due_date": null, "total_amount": 13199.06, "net_amount": 11162.06, "tax_amount": 2037.00, "currency": "EUR", "vendor_name": "Dr. med. Björn Micka", "vendor_address": "Christoph-Dassler-Str. 22, 91074 Herzogenaurach", "customer_name": "IMO GmbH & Co. KG", "customer_address": "Imostraße 1, 91350 Gremsdorf"}}"""
         return prompt
 
     def _default_classification(self) -> Dict:

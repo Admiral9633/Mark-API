@@ -37,6 +37,7 @@ class Document(models.Model):
     vendor_name = models.CharField(max_length=255, blank=True, null=True, help_text="Lieferant/Absender")
     vendor_address = models.TextField(blank=True, null=True, help_text="Lieferantenadresse")
     customer_name = models.CharField(max_length=255, blank=True, null=True, help_text="Kunde/Empfänger")
+    customer_address = models.TextField(blank=True, null=True, help_text="Kundenadresse")
 
     # Lexoffice Integration
     lexoffice_sent = models.BooleanField(default=False, help_text="Uploaded to Lexoffice")
