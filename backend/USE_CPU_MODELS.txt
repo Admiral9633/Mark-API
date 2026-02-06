@@ -1,0 +1,7 @@
+# Wenn RAM-Probleme bestehen, setze in settings.py:
+
+import os
+os.environ['TORCH_DEVICE'] = 'cpu'
+os.environ['MARKER_USE_GPU'] = '0'
+
+# Dann Django neu starten

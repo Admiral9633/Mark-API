@@ -1,0 +1,23 @@
+from rest_framework import serializers
+from .models import Document
+
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ['id', 'created_at', 'updated_at', 'original_filename', 
+                  'pdf_file', 'marker_markdown', 'marker_json', 'status', 'error_message']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'marker_markdown', 
+                           'marker_json', 'status', 'error_message']
+
+class DocumentUploadSerializer(serializers.Serializer):
+    pdf_file = serializers.FileField()
+    
+    def validate_pdf_file(self, value):
+        if not value.name.endswith('.pdf'):
+            raise serializers.ValidationError("Nur PDF-Dateien sind erlaubt.")
+        
+        # Max 50MB
+        if value.size > 50 * 1024 * 1024:
+            raise serializers.ValidationError("Datei ist zu groß. Maximum: 50MB")
+        
+        return value
