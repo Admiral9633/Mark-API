@@ -11,21 +11,21 @@ case "$1" in
         echo "🌐 Frontend: http://localhost:3000"
         echo "🔧 Backend: http://localhost:8000"
         ;;
-    
+
     stop)
         echo "🛑 Stoppe Container..."
         docker-compose stop
         ;;
-    
+
     restart)
         echo "🔄 Restarte Container..."
         docker-compose restart
         ;;
-    
+
     logs)
         docker-compose logs -f ${2:-}
         ;;
-    
+
     shell)
         if [ "$2" = "backend" ]; then
             docker-compose exec backend sh
@@ -37,25 +37,25 @@ case "$1" in
             echo "Usage: $0 shell [backend|frontend|db]"
         fi
         ;;
-    
+
     migrate)
         echo "🔄 Führe Migrationen aus..."
         docker-compose exec backend python manage.py makemigrations
         docker-compose exec backend python manage.py migrate
         ;;
-    
+
     rebuild)
         echo "🔨 Rebuilde Container..."
         docker-compose build ${2:-}
         docker-compose up -d ${2:-}
         ;;
-    
+
     clean)
         echo "🧹 Räume auf..."
         docker-compose down
         docker system prune -f
         ;;
-    
+
     reset)
         echo "⚠️  WARNUNG: Löscht alle Daten!"
         read -p "Wirklich fortfahren? (yes/no): " confirm
@@ -64,7 +64,7 @@ case "$1" in
             echo "✅ Alle Volumes gelöscht"
         fi
         ;;
-    
+
     status)
         echo "📊 Container Status:"
         docker-compose ps
@@ -72,7 +72,7 @@ case "$1" in
         echo "💾 RAM Usage:"
         docker stats --no-stream --format "table {{.Name}}\t{{.MemUsage}}"
         ;;
-    
+
     test)
         echo "🧪 Teste Services..."
         echo "1. Backend:"
@@ -84,7 +84,7 @@ case "$1" in
         echo "4. Database:"
         docker-compose exec db pg_isready -U postgres && echo "✅" || echo "❌"
         ;;
-    
+
     *)
         echo "PDF OCR Development Helper"
         echo ""

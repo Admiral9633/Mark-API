@@ -1,6 +1,7 @@
 # Deployment auf UGreen NAS mit DSM (DiskStation Manager)
 
 ## Voraussetzungen auf dem UGreen NAS
+
 - DSM 7.x installiert
 - Container Manager (Docker) installiert
 - SSH aktiviert (optional, aber empfohlen)
@@ -11,13 +12,16 @@
 ## 🚀 Methode 1: Via File Station + SSH (Empfohlen)
 
 ### Schritt 1: SSH auf UGreen NAS aktivieren
+
 1. DSM öffnen: http://UGREEN_IP:5000
 2. Systemsteuerung → Terminal & SNMP
 3. SSH-Dienst aktivieren
 4. Port: 22 (Standard)
 
 ### Schritt 2: Projekt-Ordner auf NAS erstellen
+
 Via File Station:
+
 1. File Station öffnen
 2. Navigiere zu `/docker/` (oder erstelle den Ordner)
 3. Neuer Ordner: `pdf-ocr`
@@ -25,12 +29,14 @@ Via File Station:
 ### Schritt 3: Projekt-Dateien hochladen
 
 **Option A: Via File Station (GUI)**
+
 1. File Station → `/docker/pdf-ocr/`
 2. Hochladen → Ordner auswählen
 3. Wähle das komplette `mark-api` Verzeichnis
 4. ⚠️ **Kann bei vielen Dateien lange dauern**
 
 **Option B: Via SCP (Schneller - Empfohlen)**
+
 ```powershell
 # Von lokalem Windows PC
 cd C:\Users\Administrator.BETRIEBSMEDIZIN\Documents\django\mark-api
@@ -43,6 +49,7 @@ scp -r . admin@UGREEN_IP:/volume1/docker/pdf-ocr/
 ```
 
 **Option C: Via Git (Am besten für Updates)**
+
 ```bash
 # Auf UGreen NAS via SSH
 ssh admin@UGREEN_IP
@@ -52,11 +59,13 @@ git clone https://github.com/DEIN_USERNAME/mark-api.git pdf-ocr
 ```
 
 ### Schritt 4: Via SSH auf NAS einloggen
+
 ```powershell
 ssh admin@UGREEN_IP
 ```
 
 ### Schritt 5: Docker Container starten
+
 ```bash
 cd /volume1/docker/pdf-ocr
 
@@ -71,6 +80,7 @@ sudo docker-compose ps
 ```
 
 ### Schritt 6: Zugriff testen
+
 - Frontend: http://UGREEN_IP:3000
 - Backend: http://UGREEN_IP:8000
 - Marker-API: http://UGREEN_IP:8001
@@ -80,15 +90,18 @@ sudo docker-compose ps
 ## 🎨 Methode 2: Via DSM Container Manager (GUI)
 
 ### Schritt 1: Container Manager öffnen
+
 1. DSM → Paket-Zentrum
 2. Suche "Container Manager"
 3. Installieren (falls noch nicht installiert)
 4. Container Manager öffnen
 
 ### Schritt 2: Projekt hochladen
+
 1. File Station → Projekt-Dateien hochladen nach `/docker/pdf-ocr/`
 
 ### Schritt 3: Docker Compose via GUI
+
 1. Container Manager → Projekt
 2. "Erstellen" klicken
 3. Name: `pdf-ocr`
@@ -96,6 +109,7 @@ sudo docker-compose ps
 5. "Erstellen" klicken
 
 ### Schritt 4: Container starten
+
 1. Projekt auswählen
 2. "Aktion" → "Starten"
 3. Logs ansehen unter "Details"
@@ -107,6 +121,7 @@ sudo docker-compose ps
 Falls du Backend + Frontend lokal auf deinem PC behalten willst:
 
 ### Auf UGreen NAS:
+
 ```bash
 ssh admin@UGREEN_IP
 cd /volume1/docker
@@ -141,6 +156,7 @@ sudo docker-compose up -d
 ```
 
 ### Auf lokalem PC:
+
 ```bash
 cd backend
 
@@ -168,11 +184,13 @@ npm run dev
 ## 📋 Detaillierte Schritt-für-Schritt mit Screenshots
 
 ### 1. File Station Setup
+
 ```
 DSM Login → File Station → docker → Neuer Ordner "pdf-ocr"
 ```
 
 ### 2. SCP Upload (Windows PowerShell)
+
 ```powershell
 # In deinem Projekt-Verzeichnis
 cd C:\Users\Administrator.BETRIEBSMEDIZIN\Documents\django\mark-api
@@ -189,6 +207,7 @@ scp -r . admin@UGREEN_IP:/volume1/docker/pdf-ocr/mark-api
 ```
 
 ### 3. SSH auf NAS und Container starten
+
 ```bash
 # SSH Login
 ssh admin@UGREEN_IP
@@ -210,6 +229,7 @@ sudo docker-compose ps
 ```
 
 ### 4. Firewall Ports öffnen (falls nötig)
+
 ```
 DSM → Systemsteuerung → Sicherheit → Firewall
 Regel hinzufügen:
@@ -219,6 +239,7 @@ Regel hinzufügen:
 ```
 
 ### 5. Zugriff testen
+
 ```powershell
 # Von Windows PC
 curl http://UGREEN_IP:8000/api/documents/
@@ -231,12 +252,14 @@ curl http://UGREEN_IP:8001/health
 ## 🐛 Troubleshooting
 
 ### "Permission denied" bei SCP
+
 ```powershell
 # Nutze WinSCP GUI Tool stattdessen
 # Oder aktiviere root Login auf NAS
 ```
 
 ### "docker-compose: command not found"
+
 ```bash
 # DSM 7 nutzt docker compose (ohne Bindestrich)
 sudo docker compose up -d
@@ -245,6 +268,7 @@ sudo docker compose up -d
 ```
 
 ### "Port already in use"
+
 ```bash
 # Prüfe welche Ports belegt sind
 sudo netstat -tulpn | grep :3000
@@ -255,6 +279,7 @@ ports:
 ```
 
 ### Container startet nicht - zu wenig RAM
+
 ```bash
 # Prüfe RAM
 free -h
@@ -267,6 +292,7 @@ deploy:
 ```
 
 ### Erste OCR dauert ewig
+
 ```bash
 # Normal! Marker-API lädt beim ersten Start Modelle (~5GB)
 # Logs ansehen:
@@ -281,6 +307,7 @@ sudo docker-compose logs -f marker-api
 ## 🔄 Updates einspielen
 
 ### Code-Änderungen übertragen
+
 ```powershell
 # Von Windows PC
 scp -r backend/api/views.py admin@UGREEN_IP:/volume1/docker/pdf-ocr/backend/api/
@@ -290,6 +317,7 @@ ssh admin@UGREEN_IP "cd /volume1/docker/pdf-ocr && sudo docker-compose restart b
 ```
 
 ### Komplettes Update
+
 ```bash
 # Auf NAS
 cd /volume1/docker/pdf-ocr
@@ -308,18 +336,21 @@ sudo docker-compose up -d
 ## 📊 Monitoring
 
 ### Container Status anzeigen
+
 ```bash
 sudo docker-compose ps
 sudo docker stats
 ```
 
 ### Logs live verfolgen
+
 ```bash
 sudo docker-compose logs -f backend
 sudo docker-compose logs -f marker-api
 ```
 
 ### DSM Resource Monitor nutzen
+
 ```
 DSM → Resource Monitor → Docker Container
 ```

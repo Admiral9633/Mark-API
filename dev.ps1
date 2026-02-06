@@ -3,7 +3,7 @@
 param(
     [Parameter(Position=0)]
     [string]$Command,
-    
+
     [Parameter(Position=1)]
     [string]$Service
 )
@@ -42,17 +42,17 @@ switch ($Command) {
         Write-Host "🌐 Frontend: http://localhost:3000"
         Write-Host "🔧 Backend: http://localhost:8000"
     }
-    
+
     "stop" {
         Write-Host "🛑 Stoppe Container..." -ForegroundColor Yellow
         docker-compose stop
     }
-    
+
     "restart" {
         Write-Host "🔄 Restarte Container..." -ForegroundColor Yellow
         docker-compose restart
     }
-    
+
     "logs" {
         if ($Service) {
             docker-compose logs -f $Service
@@ -60,7 +60,7 @@ switch ($Command) {
             docker-compose logs -f
         }
     }
-    
+
     "shell" {
         switch ($Service) {
             "backend" {
@@ -77,13 +77,13 @@ switch ($Command) {
             }
         }
     }
-    
+
     "migrate" {
         Write-Host "🔄 Führe Migrationen aus..." -ForegroundColor Cyan
         docker-compose exec backend python manage.py makemigrations
         docker-compose exec backend python manage.py migrate
     }
-    
+
     "rebuild" {
         Write-Host "🔨 Rebuilde Container..." -ForegroundColor Cyan
         if ($Service) {
@@ -94,13 +94,13 @@ switch ($Command) {
             docker-compose up -d
         }
     }
-    
+
     "clean" {
         Write-Host "🧹 Räume auf..." -ForegroundColor Yellow
         docker-compose down
         docker system prune -f
     }
-    
+
     "reset" {
         Write-Host "⚠️  WARNUNG: Löscht alle Daten!" -ForegroundColor Red
         $confirm = Read-Host "Wirklich fortfahren? (yes/no)"
@@ -109,7 +109,7 @@ switch ($Command) {
             Write-Host "✅ Alle Volumes gelöscht" -ForegroundColor Green
         }
     }
-    
+
     "status" {
         Write-Host "📊 Container Status:" -ForegroundColor Cyan
         docker-compose ps
@@ -117,10 +117,10 @@ switch ($Command) {
         Write-Host "💾 RAM Usage:" -ForegroundColor Cyan
         docker stats --no-stream --format "table {{.Name}}`t{{.MemUsage}}"
     }
-    
+
     "test" {
         Write-Host "🧪 Teste Services..." -ForegroundColor Cyan
-        
+
         Write-Host "1. Backend: " -NoNewline
         try {
             $response = Invoke-WebRequest -Uri "http://localhost:8000/api/documents/" -UseBasicParsing -TimeoutSec 5
@@ -128,7 +128,7 @@ switch ($Command) {
         } catch {
             Write-Host "❌" -ForegroundColor Red
         }
-        
+
         Write-Host "2. Frontend: " -NoNewline
         try {
             $response = Invoke-WebRequest -Uri "http://localhost:3000" -UseBasicParsing -TimeoutSec 5
@@ -136,7 +136,7 @@ switch ($Command) {
         } catch {
             Write-Host "❌" -ForegroundColor Red
         }
-        
+
         Write-Host "3. Marker-API: " -NoNewline
         try {
             $response = Invoke-WebRequest -Uri "http://localhost:8001/health" -UseBasicParsing -TimeoutSec 5
@@ -144,7 +144,7 @@ switch ($Command) {
         } catch {
             Write-Host "❌" -ForegroundColor Red
         }
-        
+
         Write-Host "4. Database: " -NoNewline
         $dbCheck = docker-compose exec db pg_isready -U postgres
         if ($LASTEXITCODE -eq 0) {
@@ -153,7 +153,7 @@ switch ($Command) {
             Write-Host "❌" -ForegroundColor Red
         }
     }
-    
+
     default {
         Show-Usage
     }

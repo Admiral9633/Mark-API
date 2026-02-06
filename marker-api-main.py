@@ -16,38 +16,38 @@ async def convert_pdf(pdf: UploadFile = File(...)):
         # Import hier um Modelle lazy zu laden
         from marker.converters.pdf import PdfConverter
         from marker.models import create_model_dict
-        
+
         # Temporäre Datei
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
             content = await pdf.read()
             tmp_file.write(content)
             tmp_path = tmp_file.name
-        
+
         # Modelle laden
         model_dict = create_model_dict()
-        
+
         # Converter initialisieren
         converter = PdfConverter(artifact_dict=model_dict)
-        
+
         # PDF konvertieren
         rendered = converter(tmp_path)
-        
+
         # Cleanup
         os.unlink(tmp_path)
-        
+
         # Metadata extrahieren
         metadata = {}
         if hasattr(rendered, 'metadata'):
             metadata = rendered.metadata
         elif hasattr(rendered, '__dict__'):
-            metadata = {k: v for k, v in rendered.__dict__.items() 
+            metadata = {k: v for k, v in rendered.__dict__.items()
                        if k != 'markdown' and not k.startswith('_')}
-        
+
         return JSONResponse({
             "markdown": rendered.markdown,
             "metadata": metadata
         })
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

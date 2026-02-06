@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { UploadZone } from '@/components/upload-zone'
-import { DocumentList } from '@/components/document-list'
+import { useState } from "react";
+import { UploadZone } from "@/components/upload-zone";
+import { DocumentList } from "@/components/document-list";
 
 export default function Home() {
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleUploadSuccess = () => {
     // Trigger refresh of document list
-    setRefreshKey(prev => prev + 1)
-  }
+    setRefreshKey((prev) => prev + 1);
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -32,5 +32,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
+  );
 }

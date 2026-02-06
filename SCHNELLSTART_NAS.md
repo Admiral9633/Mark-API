@@ -21,11 +21,13 @@ Das war's! Öffne Browser: `http://192.168.1.XXX:3000`
 ## Option 2: Manuelles Deployment
 
 ### 1️⃣ SSH auf NAS aktivieren
+
 ```
 DSM Login → Systemsteuerung → Terminal & SNMP → SSH aktivieren ✅
 ```
 
 ### 2️⃣ Projekt auf NAS kopieren
+
 ```powershell
 # Windows PowerShell
 cd C:\Users\Administrator.BETRIEBSMEDIZIN\Documents\django\mark-api
@@ -35,11 +37,13 @@ scp -r . admin@192.168.1.XXX:/volume1/docker/pdf-ocr/
 ```
 
 ### 3️⃣ Via SSH auf NAS einloggen
+
 ```powershell
 ssh admin@192.168.1.XXX
 ```
 
 ### 4️⃣ Container starten
+
 ```bash
 cd /volume1/docker/pdf-ocr
 sudo docker-compose up -d
@@ -49,6 +53,7 @@ sudo docker-compose logs -f
 ```
 
 ### 5️⃣ Browser öffnen
+
 ```
 http://192.168.1.XXX:3000
 ```
@@ -60,6 +65,7 @@ http://192.168.1.XXX:3000
 **Am besten für Entwicklung!**
 
 ### Auf NAS:
+
 ```bash
 ssh admin@192.168.1.XXX
 mkdir -p /volume1/docker/marker-api
@@ -88,6 +94,7 @@ sudo docker-compose up -d
 ```
 
 ### Auf Windows PC:
+
 ```powershell
 # Backend
 cd backend
@@ -105,11 +112,11 @@ npm run dev
 
 ## ❓ Welche Option?
 
-| Option | Wann nutzen | Performance |
-|--------|-------------|-------------|
-| **Option 1 - Auto** | Erstes Deployment | ⭐⭐⭐ |
-| **Option 2 - Manuell** | Wenn du SSH kennst | ⭐⭐⭐ |
-| **Option 3 - Hybrid** | Entwicklung | ⭐⭐⭐⭐⭐ |
+| Option                 | Wann nutzen        | Performance |
+| ---------------------- | ------------------ | ----------- |
+| **Option 1 - Auto**    | Erstes Deployment  | ⭐⭐⭐      |
+| **Option 2 - Manuell** | Wenn du SSH kennst | ⭐⭐⭐      |
+| **Option 3 - Hybrid**  | Entwicklung        | ⭐⭐⭐⭐⭐  |
 
 **Empfehlung:** Starte mit Option 1 (Auto-Deploy), dann nutze Option 3 für Entwicklung.
 
@@ -118,12 +125,14 @@ npm run dev
 ## 🔧 Troubleshooting Quick Fixes
 
 ### SSH funktioniert nicht
+
 ```
 DSM → Systemsteuerung → Terminal & SNMP → SSH aktivieren ✅
 Firewall prüfen: Port 22 offen?
 ```
 
 ### Container startet nicht
+
 ```bash
 ssh admin@NAS_IP
 cd /volume1/docker/pdf-ocr
@@ -131,12 +140,14 @@ sudo docker-compose logs -f
 ```
 
 ### Ports nicht erreichbar
+
 ```
 DSM → Systemsteuerung → Sicherheit → Firewall
 Ports 3000, 8000, 8001 freigeben
 ```
 
 ### Zu wenig RAM
+
 Nutze Option 3 (Hybrid) - nur Marker-API auf NAS.
 
 ---

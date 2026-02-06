@@ -19,6 +19,7 @@ docker-compose restart
 ## Helper Script (Empfohlen!)
 
 **Windows:**
+
 ```powershell
 .\dev.ps1 start     # Alles starten
 .\dev.ps1 logs      # Logs anzeigen
@@ -27,6 +28,7 @@ docker-compose restart
 ```
 
 **Linux/Mac:**
+
 ```bash
 ./dev.sh start
 ./dev.sh logs
@@ -36,23 +38,25 @@ docker-compose restart
 
 ## Code ändern - Was passiert?
 
-| Datei geändert | Was passiert | Wartezeit |
-|----------------|--------------|-----------|
-| `backend/**/*.py` | Django Auto-Reload | 2-3 Sek |
-| `frontend/**/*.tsx` | Next.js HMR | Sofort |
-| `requirements.txt` | Rebuild nötig | `docker-compose build backend` |
-| `package.json` | Rebuild nötig | `docker-compose build frontend` |
-| `models.py` | Migration nötig | `docker-compose exec backend python manage.py migrate` |
+| Datei geändert      | Was passiert       | Wartezeit                                              |
+| ------------------- | ------------------ | ------------------------------------------------------ |
+| `backend/**/*.py`   | Django Auto-Reload | 2-3 Sek                                                |
+| `frontend/**/*.tsx` | Next.js HMR        | Sofort                                                 |
+| `requirements.txt`  | Rebuild nötig      | `docker-compose build backend`                         |
+| `package.json`      | Rebuild nötig      | `docker-compose build frontend`                        |
+| `models.py`         | Migration nötig    | `docker-compose exec backend python manage.py migrate` |
 
 ## Häufige Aufgaben
 
 ### Django Migrations
+
 ```bash
 docker-compose exec backend python manage.py makemigrations
 docker-compose exec backend python manage.py migrate
 ```
 
 ### Shell im Container
+
 ```bash
 # Backend (Python)
 docker-compose exec backend sh
@@ -65,6 +69,7 @@ docker-compose exec db psql -U postgres -d pdf_ocr
 ```
 
 ### Django Management Commands
+
 ```bash
 # Admin User erstellen
 docker-compose exec backend python manage.py createsuperuser
@@ -77,6 +82,7 @@ docker-compose exec backend python manage.py test
 ```
 
 ### NPM Pakete installieren
+
 ```bash
 # Im Container
 docker-compose exec frontend npm install package-name
@@ -143,17 +149,17 @@ mark-api/
 
 ## Cheat Sheet
 
-| Aktion | Command |
-|--------|---------|
-| Start | `docker-compose up -d` |
-| Stop | `docker-compose stop` |
-| Restart | `docker-compose restart` |
-| Logs | `docker-compose logs -f` |
-| Shell | `docker-compose exec backend sh` |
+| Aktion  | Command                                                |
+| ------- | ------------------------------------------------------ |
+| Start   | `docker-compose up -d`                                 |
+| Stop    | `docker-compose stop`                                  |
+| Restart | `docker-compose restart`                               |
+| Logs    | `docker-compose logs -f`                               |
+| Shell   | `docker-compose exec backend sh`                       |
 | Migrate | `docker-compose exec backend python manage.py migrate` |
-| Build | `docker-compose build` |
-| Clean | `docker-compose down` |
-| Status | `docker-compose ps` |
+| Build   | `docker-compose build`                                 |
+| Clean   | `docker-compose down`                                  |
+| Status  | `docker-compose ps`                                    |
 
 ---
 

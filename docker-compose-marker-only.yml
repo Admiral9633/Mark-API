@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Nur Marker-API für OCR
@@ -7,7 +7,7 @@ services:
     container_name: pdf_ocr_marker
     restart: unless-stopped
     environment:
-      - TORCH_DEVICE=cpu  # Ändere zu 'cuda' falls GPU vorhanden
+      - TORCH_DEVICE=cpu # Ändere zu 'cuda' falls GPU vorhanden
       - MARKER_USE_GPU=0
     volumes:
       - marker_cache:/root/.cache
@@ -20,7 +20,15 @@ services:
         limits:
           memory: 12G
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8000/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

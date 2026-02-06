@@ -4,10 +4,10 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$NasIP,
-    
+
     [Parameter(Mandatory=$false)]
     [string]$NasUser = "admin",
-    
+
     [Parameter(Mandatory=$false)]
     [string]$DeployPath = "/volume1/docker/pdf-ocr"
 )

@@ -3,31 +3,38 @@
 ## Methode 1: Via DSM File Station (GUI - EMPFOHLEN)
 
 ### Schritt 1: Ordner vorbereiten
+
 1. DSM öffnen: http://192.168.178.84:5000
 2. File Station → docker → Neuer Ordner: `pdf-ocr`
 
 ### Schritt 2: Dateien hochladen
+
 Öffne auf PC: `C:\Users\Administrator.BETRIEBSMEDIZIN\Documents\django\mark-api`
 
 Lade folgende Ordner/Dateien in File Station hoch (nach `/docker/pdf-ocr/`):
+
 - ✅ `backend/` (kompletter Ordner)
 - ✅ `frontend/` (kompletter Ordner)
 - ✅ `docker-compose.yml`
 - ✅ `Dockerfile.marker-api`
 
 **Tipp:** Packe alles in eine ZIP-Datei:
+
 ```powershell
 # Auf PC
 Compress-Archive -Path backend,frontend,docker-compose.yml,Dockerfile.marker-api -DestinationPath pdf-ocr.zip
 ```
+
 Dann ZIP hochladen und auf NAS entpacken.
 
 ### Schritt 3: Via SSH auf NAS
+
 ```powershell
 ssh bjoern@192.168.178.84
 ```
 
 ### Schritt 4: Container starten
+
 ```bash
 cd /volume1/docker/pdf-ocr
 
@@ -45,6 +52,7 @@ sudo docker-compose logs -f
 ```
 
 ### Schritt 5: Zugriff
+
 - Frontend: http://192.168.178.84:3000
 - Backend: http://192.168.178.84:8000
 - Admin: http://192.168.178.84:8000/admin/
@@ -54,20 +62,24 @@ sudo docker-compose logs -f
 ## Methode 2: Via WinSCP (Schneller Upload)
 
 ### Download WinSCP
+
 https://winscp.net/eng/download.php
 
 ### Verbindung einrichten
+
 - Host: 192.168.178.84
 - Port: 22
 - User: bjoern
 - Passwort: [dein Passwort]
 
 ### Upload
+
 1. Lokal: `C:\Users\Administrator.BETRIEBSMEDIZIN\Documents\django\mark-api`
 2. Remote: `/volume1/docker/pdf-ocr/`
 3. Drag & Drop alle Dateien
 
 ### SSH Container starten
+
 ```bash
 ssh bjoern@192.168.178.84
 cd /volume1/docker/pdf-ocr
@@ -91,6 +103,7 @@ sudo docker-compose logs -f
 ## Troubleshooting
 
 ### Dateien fehlen auf NAS
+
 ```bash
 # Prüfe
 ssh bjoern@192.168.178.84
@@ -98,12 +111,14 @@ ls -la /volume1/docker/pdf-ocr/
 ```
 
 ### Docker Compose fehlt
+
 ```bash
 # DSM 7 nutzt "docker compose" (ohne Bindestrich)
 sudo docker compose up -d
 ```
 
 ### Container bauen fehlgeschlagen
+
 ```bash
 # Logs ansehen
 sudo docker-compose logs backend
@@ -112,6 +127,7 @@ sudo docker-compose logs marker-api
 ```
 
 ### Port bereits belegt
+
 ```bash
 # Prüfe welche Ports verwendet werden
 sudo netstat -tulpn | grep :3000
@@ -119,6 +135,7 @@ sudo netstat -tulpn | grep :8000
 ```
 
 ### Zu wenig Speicher
+
 ```bash
 # Prüfe Docker Stats
 sudo docker stats
@@ -143,6 +160,7 @@ sudo docker stats
 ## Nächste Schritte
 
 Nach erfolgreichem Start:
+
 1. Admin-User erstellen: `sudo docker-compose exec backend python manage.py createsuperuser`
 2. Firewall Ports öffnen (falls von extern erreichbar)
 3. Reverse Proxy einrichten (optional)

@@ -1,69 +1,72 @@
-'use client'
+"use client";
 
-import { useCallback, useState } from 'react'
-import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { useToast } from '@/components/ui/use-toast'
+import { useCallback, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { Upload, FileText, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 
 interface UploadZoneProps {
-  onUploadSuccess?: () => void
+  onUploadSuccess?: () => void;
 }
 
 export function UploadZone({ onUploadSuccess }: UploadZoneProps) {
-  const [isUploading, setIsUploading] = useState(false)
-  const { toast } = useToast()
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0]
-    if (!file) return
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (!file) return;
 
-    setIsUploading(true)
+      setIsUploading(true);
 
-    try {
-      const formData = new FormData()
-      formData.append('pdf_file', file)
+      try {
+        const formData = new FormData();
+        formData.append("pdf_file", file);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/documents/convert/`,
-        {
-          method: 'POST',
-          body: formData,
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/documents/convert/`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Upload fehlgeschlagen");
         }
-      )
 
-      if (!response.ok) {
-        throw new Error('Upload fehlgeschlagen')
+        const data = await response.json();
+
+        toast({
+          title: "✅ Erfolg",
+          description: `${file.name} wurde erfolgreich verarbeitet`,
+        });
+
+        onUploadSuccess?.();
+      } catch (error) {
+        toast({
+          title: "❌ Fehler",
+          description: "Upload fehlgeschlagen. Bitte versuchen Sie es erneut.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
       }
-
-      const data = await response.json()
-
-      toast({
-        title: '✅ Erfolg',
-        description: `${file.name} wurde erfolgreich verarbeitet`,
-      })
-
-      onUploadSuccess?.()
-    } catch (error) {
-      toast({
-        title: '❌ Fehler',
-        description: 'Upload fehlgeschlagen. Bitte versuchen Sie es erneut.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsUploading(false)
-    }
-  }, [toast, onUploadSuccess])
+    },
+    [toast, onUploadSuccess],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf'],
+      "application/pdf": [".pdf"],
     },
     maxFiles: 1,
     disabled: isUploading,
-  })
+  });
 
   return (
     <Card>
@@ -73,12 +76,12 @@ export function UploadZone({ onUploadSuccess }: UploadZoneProps) {
           className={`
             border-2 border-dashed rounded-lg p-12 text-center cursor-pointer
             transition-colors duration-200
-            ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
-            ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}
+            ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400"}
+            ${isUploading ? "opacity-50 cursor-not-allowed" : ""}
           `}
         >
           <input {...getInputProps()} />
-          
+
           <div className="flex flex-col items-center gap-4">
             {isUploading ? (
               <>
@@ -111,5 +114,5 @@ export function UploadZone({ onUploadSuccess }: UploadZoneProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

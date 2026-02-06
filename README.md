@@ -19,6 +19,7 @@ Ein vollständig lokales System zum Hochladen und Verarbeiten von gescannten PDF
 ### Installation
 
 1. **Repository klonen**
+
 ```bash
 cd c:\Users\Administrator.BETRIEBSMEDIZIN\Documents\django\mark-api
 ```
@@ -39,6 +40,7 @@ docker compose up -d
 ```
 
 Dies startet:
+
 - MySQL Datenbank (Port 3306)
 - Marker-API OCR Service (Port 8001)
 - Django Backend (Port 8000)
@@ -201,16 +203,19 @@ docker compose down -v
 ### Datenbank-Verbindungsfehler
 
 1. Sicherstellen, dass MySQL Container läuft:
+
 ```bash
 docker compose ps
 ```
 
 2. Logs prüfen:
+
 ```bash
 docker compose logs db
 ```
 
 3. Im Backend-Container testen:
+
 ```bash
 docker exec -it pdf_ocr_backend python manage.py dbshell
 ```
@@ -218,11 +223,13 @@ docker exec -it pdf_ocr_backend python manage.py dbshell
 ### Marker-API antwortet nicht
 
 1. Marker Container Logs prüfen:
+
 ```bash
 docker compose logs marker
 ```
 
 2. Health-Check:
+
 ```bash
 curl http://localhost:8001/health
 ```
@@ -268,12 +275,13 @@ Dieses Projekt ist für den privaten Gebrauch bestimmt.
 ## 🤝 Support
 
 Bei Problemen:
+
 1. Logs prüfen: `docker compose logs`
 2. Container neu starten: `docker compose restart`
 3. Volumes prüfen: `docker volume ls`
 
 ---
 
-**Status**: ✅ Produktionsbereit für lokale Nutzung  
-**Version**: 1.0.0  
+**Status**: ✅ Produktionsbereit für lokale Nutzung
+**Version**: 1.0.0
 **Datum**: Februar 2026

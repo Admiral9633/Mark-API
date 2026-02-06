@@ -1,6 +1,7 @@
 # Docker Permission Fix für DSM/UGreen NAS
 
 ## Lösung 1: Mit sudo (Schnell)
+
 ```bash
 sudo docker run -d --name marker-api \
   -p 8001:8000 \
@@ -10,6 +11,7 @@ sudo docker run -d --name marker-api \
 ```
 
 ## Lösung 2: User zur docker-Gruppe hinzufügen (Dauerhaft)
+
 ```bash
 # Als root/admin
 sudo usermod -aG docker bjoern
@@ -23,6 +25,7 @@ docker run -d --name marker-api -p 8001:8000 -v marker_cache:/root/.cache --memo
 ```
 
 ## Testen ob es läuft
+
 ```bash
 # Container Status
 sudo docker ps
