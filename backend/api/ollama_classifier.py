@@ -22,7 +22,7 @@ class OllamaClassifier:
 
     def classify_document(self, markdown_text: str) -> Dict:
         """
-        Classify a document based on its extracted text content.
+        STEP 1: Quick classification only - is this an invoice?
         
         Args:
             markdown_text: OCR extracted text in markdown format
@@ -35,7 +35,7 @@ class OllamaClassifier:
                 - reasoning (str): AI explanation
         """
         try:
-            # Build classification prompt
+            # Build simple classification prompt (no data extraction)
             prompt = self._build_classification_prompt(markdown_text)
             
             # Call Ollama API
@@ -48,10 +48,10 @@ class OllamaClassifier:
                     "format": "json",
                     "options": {
                         "temperature": 0,
-                        "num_predict": 500
+                        "num_predict": 200
                     }
                 },
-                timeout=300
+                timeout=120
             )
             
             if response.status_code != 200:
@@ -82,34 +82,112 @@ class OllamaClassifier:
             logger.error(f"Unexpected error in classify_document: {e}")
             return self._default_classification()
 
-    def _build_classification_prompt(self, text: str) -> str:
-        """Build the classification prompt for Ollama"""
-        # Use more text for better extraction (first 3000 characters)
-        text_sample = text[:3000] if len(text) > 3000 else text
+    def extract_invoice_data(self, markdown_text: str, invoice_type: str) -> Dict:
+        """
+        STEP 2: Extract invoice data (called only if is_invoice=True)
         
-        prompt = f"""Du bist ein Experte für Rechnungserkennung. Analysiere dieses Dokument und gib ein VOLLSTÄNDIGES JSON zurück.
+        Args:
+            markdown_text: OCR extracted text
+            invoice_type: 'incoming' or 'outgoing'
+            
+        Returns:
+            Dict with extracted invoice fields
+        """
+        try:
+            prompt = self._build_extraction_prompt(markdown_text, invoice_type)
+            
+            # Call Ollama API for data extraction
+            response = requests.post(
+                f"{self.api_url}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "format": "json",
+                    "options": {
+                        "temperature": 0,
+                        "num_predict": 400
+                    }
+                },
+                timeout=180
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Ollama extraction API error: {response.status_code}")
+                return {}
+            
+            result = response.json()
+            ai_response = result.get("response", "{}")
+            
+            try:
+                extracted = json.loads(ai_response)
+                logger.info(f"Extracted invoice data: {extracted}")
+                return extracted
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse extraction response: {ai_response}")
+                return {}
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Ollama extraction connection error: {e}")
+            return {}
+        except Exception as e:
+            logger.error(f"Unexpected error in extract_invoice_data: {e}")
+            return {}
+
+    def _build_classification_prompt(self, text: str) -> str:
+        """Build SIMPLE classification prompt (no extraction)"""
+        text_sample = text[:2000] if len(text) > 2000 else text
+        
+        prompt = f"""Du bist Rechnungs-Erkennungs-Experte. Analysiere NUR ob dies eine Rechnung ist.
 
 DOKUMENT:
 {text_sample}
 
-DEINE AUFGABEN:
-1. Ist dies eine Rechnung? Suche nach "Rechnung", "Invoice", "RE-", Rechnungsnummer
-2. invoice_type bestimmen:
-   - "outgoing": Absender ist "Dr. med. Björn Micka" → ICH habe die Rechnung geschrieben
-   - "incoming": Absender ist eine andere Firma → ICH muss bezahlen
-3. EXTRAHIERE alle Daten (auch wenn schwer zu finden):
-   - invoice_number: Die Rechnungsnummer (z.B. "2026-F00023-R001")
-   - invoice_date: Das Rechnungsdatum im Format YYYY-MM-DD
-   - total_amount: Der Gesamtbetrag als ZAHL (z.B. 150.00)
-   - vendor_name: Der Name des Absenders
-   - customer_name: Der Name des Empfängers
+AUFGABEN:
+1. Ist dies eine Rechnung? Suche: "Rechnung", "Invoice", "RE-", Rechnungsnummer
+2. Typ bestimmen:
+   - "outgoing": Absender "Dr. med. Björn Micka" → ICH schreibe Rechnung
+   - "incoming": Andere Firma → ICH bezahle
 
-ANTWORTE mit diesem EXAKTEN JSON (ALLE Felder müssen vorhanden sein!):
+JSON Format:
 {{
   "is_invoice": true,
   "invoice_type": "outgoing",
   "confidence": 0.95,
-  "reasoning": "Rechnung 2026-F00023-R001 gefunden",
+  "reasoning": "Rechnung RE-123 von Dr. Micka gefunden"
+}}"""
+        return prompt
+
+    def _build_extraction_prompt(self, text: str, invoice_type: str) -> str:
+        """Build focused extraction prompt"""
+        text_sample = text[:3000] if len(text) > 3000 else text
+        
+        if invoice_type == "outgoing":
+            vendor_hint = "Dr. med. Björn Micka"
+            customer_hint = "Empfänger im Dokument"
+        else:
+            vendor_hint = "Absender/Lieferant im Dokument"
+            customer_hint = "Dr. med. Björn Micka"
+        
+        prompt = f"""Extrahiere alle Daten aus dieser Rechnung. Sei präzise.
+
+DOKUMENT:
+{text_sample}
+
+EXTRAHIERE:
+- invoice_number: Rechnungsnummer (z.B. "2026-F00023-R001")
+- invoice_date: Rechnungsdatum (Format: YYYY-MM-DD)
+- due_date: Fälligkeitsdatum (Format: YYYY-MM-DD)
+- total_amount: Gesamtbetrag (Zahl, z.B. 150.00)
+- net_amount: Nettobetrag
+- tax_amount: MwSt-Betrag
+- currency: Währung (meist "EUR")
+- vendor_name: {vendor_hint}
+- vendor_address: Vollständige Adresse des Absenders
+- customer_name: {customer_hint}
+
+JSON Format (nutze null wenn nicht gefunden):
+{{
   "invoice_number": "2026-F00023-R001",
   "invoice_date": "2026-01-21",
   "due_date": null,
@@ -118,16 +196,9 @@ ANTWORTE mit diesem EXAKTEN JSON (ALLE Felder müssen vorhanden sein!):
   "tax_amount": null,
   "currency": "EUR",
   "vendor_name": "Dr. med. Björn Micka",
-  "vendor_address": null,
-  "customer_name": "Erkan Ökcü"
-}}
-
-REGELN:
-- Beträge als Zahlen (150.00 nicht "150.00")
-- Wenn Feld nicht gefunden: null (nicht weglassen!)
-- Datum: YYYY-MM-DD Format
-- ALLE 14 Felder MÜSSEN im JSON sein"""
-
+  "vendor_address": "Musterstr. 1, 12345 Stadt",
+  "customer_name": "Max Mustermann"
+}}"""
         return prompt
 
     def _default_classification(self) -> Dict:

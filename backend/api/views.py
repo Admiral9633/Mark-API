@@ -89,35 +89,50 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 document.save()
                 print(f"[OCR] Dokument {document.id} erfolgreich verarbeitet")
 
-                # AI Classification mit Ollama
+                # AI Classification mit Ollama (2-Step Process)
                 print(f"[AI] Starte Klassifizierung für Dokument {document.id}")
                 try:
                     classifier = OllamaClassifier()
+                    
+                    # STEP 1: Classify document (fast, ~1-2 minutes)
                     classification = classifier.classify_document(document.marker_markdown)
                     
-                    # Speichere AI Klassifizierung
+                    # Speichere Basis-Klassifizierung
                     document.ai_classification = classification
                     document.is_invoice = classification.get('is_invoice', False)
                     document.invoice_type = classification.get('invoice_type')
-                    
-                    # Speichere extrahierte Rechnungsdaten
-                    if document.is_invoice:
-                        document.invoice_number = classification.get('invoice_number')
-                        document.invoice_date = classification.get('invoice_date')
-                        document.due_date = classification.get('due_date')
-                        document.total_amount = classification.get('total_amount')
-                        document.net_amount = classification.get('net_amount')
-                        document.tax_amount = classification.get('tax_amount')
-                        document.currency = classification.get('currency') or 'EUR'
-                        document.vendor_name = classification.get('vendor_name')
-                        document.vendor_address = classification.get('vendor_address')
-                        document.customer_name = classification.get('customer_name')
-                    
                     document.save()
                     
-                    print(f"[AI] Klassifizierung abgeschlossen: is_invoice={document.is_invoice}, type={document.invoice_type}")
-                    if document.is_invoice:
-                        print(f"[AI] Extrahierte Daten: RE-Nr={document.invoice_number}, Betrag={document.total_amount}, Lieferant={document.vendor_name}")
+                    print(f"[AI] Klassifizierung: is_invoice={document.is_invoice}, type={document.invoice_type}")
+                    
+                    # STEP 2: Extract invoice data only if is_invoice=True (focused, ~2-3 minutes)
+                    if document.is_invoice and document.invoice_type:
+                        print(f"[AI] Starte Datenextraktion für {document.invoice_type} Rechnung")
+                        extracted_data = classifier.extract_invoice_data(
+                            document.marker_markdown,
+                            document.invoice_type
+                        )
+                        
+                        if extracted_data:
+                            # Speichere extrahierte Daten
+                            document.invoice_number = extracted_data.get('invoice_number')
+                            document.invoice_date = extracted_data.get('invoice_date')
+                            document.due_date = extracted_data.get('due_date')
+                            document.total_amount = extracted_data.get('total_amount')
+                            document.net_amount = extracted_data.get('net_amount')
+                            document.tax_amount = extracted_data.get('tax_amount')
+                            document.currency = extracted_data.get('currency') or 'EUR'
+                            document.vendor_name = extracted_data.get('vendor_name')
+                            document.vendor_address = extracted_data.get('vendor_address')
+                            document.customer_name = extracted_data.get('customer_name')
+                            
+                            # Update ai_classification mit extrahierten Daten
+                            document.ai_classification.update(extracted_data)
+                            
+                            document.save()
+                            print(f"[AI] Extraktion erfolgreich: RE-Nr={document.invoice_number}, Betrag={document.total_amount}, Lieferant={document.vendor_name}")
+                        else:
+                            print(f"[AI] Extraktion fehlgeschlagen oder leer")
                     
                     # Wenn Rechnung erkannt wurde, zu Lexoffice hochladen
                     if document.is_invoice:
