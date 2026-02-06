@@ -155,7 +155,6 @@ class LexofficeClient:
                 "voucherDate": invoice_data.get("invoice_date"),
                 "dueDate": invoice_data.get("due_date"),
                 "totalGrossAmount": invoice_data.get("total_amount"),
-                "totalTaxAmount": invoice_data.get("tax_amount"),
                 "taxType": "gross",
                 "useCollectiveContact": False,
                 "remark": f"Automatisch extrahiert durch KI",
