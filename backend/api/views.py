@@ -159,7 +159,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
                             upload_result = lexoffice_client.upload_voucher(
                                 document.pdf_file.path,
                                 voucher_type='voucher',
-                                invoice_data=invoice_data
+                                invoice_data=invoice_data,
+                                doc_invoice_type=document.invoice_type
                             )
                             
                             if upload_result.get('success'):

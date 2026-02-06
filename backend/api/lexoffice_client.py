@@ -23,7 +23,7 @@ class LexofficeClient:
             "Accept": "application/json"
         }
 
-    def upload_voucher(self, pdf_file_path: str, voucher_type: str = "voucher", invoice_data: Dict = None) -> Dict:
+    def upload_voucher(self, pdf_file_path: str, voucher_type: str = "voucher", invoice_data: Dict = None, doc_invoice_type: str = None) -> Dict:
         """
         Upload a voucher (invoice) to Lexoffice with pre-filled data
         
@@ -37,6 +37,7 @@ class LexofficeClient:
                 - total_amount: Gesamtbetrag
                 - vendor_name: Lieferantenname
                 - etc.
+            doc_invoice_type: 'incoming' or 'outgoing' from AI classification
             
         Returns:
             Dict containing:
@@ -74,7 +75,7 @@ class LexofficeClient:
                 
                 # Step 2: If invoice_data provided, update voucher with extracted data
                 if invoice_data and voucher_id:
-                    update_success = self._update_voucher_data(voucher_id, file_id, invoice_data)
+                    update_success = self._update_voucher_data(voucher_id, file_id, invoice_data, doc_invoice_type)
                     if not update_success:
                         logger.warning(f"Voucher uploaded but data update failed for {voucher_id}")
                 
@@ -110,7 +111,7 @@ class LexofficeClient:
                 "error": f"Unexpected error: {str(e)}"
             }
 
-    def _update_voucher_data(self, voucher_id: str, file_id: str, invoice_data: Dict) -> bool:
+    def _update_voucher_data(self, voucher_id: str, file_id: str, invoice_data: Dict, doc_invoice_type: str = None) -> bool:
         """
         Update voucher with extracted invoice data
         
@@ -118,13 +119,25 @@ class LexofficeClient:
             voucher_id: Lexoffice voucher ID
             file_id: Lexoffice file ID
             invoice_data: Extracted invoice data from AI
+            doc_invoice_type: 'incoming' or 'outgoing' from AI classification
             
         Returns:
             bool: Success status
         """
         try:
+            # Determine Lexoffice voucher type based on our classification
+            # incoming = we received invoice (purchaseinvoice)
+            # outgoing = we sent invoice (salesinvoice)
+            if doc_invoice_type == "incoming":
+                lexoffice_type = "purchaseinvoice"
+                default_category = "8f8664a8-fd86-11e1-a21f-0800200c9a66"  # Wareneinkauf
+            else:  # outgoing or unknown
+                lexoffice_type = "salesinvoice" 
+                default_category = "8f8664a8-fd86-11e1-a21f-0800200c9a66"  # Default category
+            
             # Build voucher data structure for Lexoffice API
             voucher_payload = {
+                "type": lexoffice_type,
                 "voucherNumber": invoice_data.get("invoice_number"),
                 "voucherDate": invoice_data.get("invoice_date"),
                 "dueDate": invoice_data.get("due_date"),
@@ -141,7 +154,7 @@ class LexofficeClient:
                             invoice_data.get("total_amount"),
                             invoice_data.get("tax_amount")
                         ),
-                        "categoryId": None  # Lexoffice will auto-assign
+                        "categoryId": default_category
                     }
                 ],
                 "files": [file_id]
