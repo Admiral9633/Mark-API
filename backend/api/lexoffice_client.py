@@ -75,7 +75,17 @@ class LexofficeClient:
                 
                 # Step 2: If invoice_data provided, update voucher with extracted data
                 if invoice_data and voucher_id:
-                    update_success = self._update_voucher_data(voucher_id, file_id, invoice_data, doc_invoice_type)
+                    # Get or create contact first
+                    contact_id = None
+                    if doc_invoice_type == "outgoing":
+                        contact_name = invoice_data.get("customer_name")
+                    else:
+                        contact_name = invoice_data.get("vendor_name")
+                    
+                    if contact_name:
+                        contact_id = self._get_or_create_contact(contact_name, doc_invoice_type)
+                    
+                    update_success = self._update_voucher_data(voucher_id, file_id, invoice_data, doc_invoice_type, contact_id)
                     if not update_success:
                         logger.warning(f"Voucher uploaded but data update failed for {voucher_id}")
                 
@@ -111,7 +121,7 @@ class LexofficeClient:
                 "error": f"Unexpected error: {str(e)}"
             }
 
-    def _update_voucher_data(self, voucher_id: str, file_id: str, invoice_data: Dict, doc_invoice_type: str = None) -> bool:
+    def _update_voucher_data(self, voucher_id: str, file_id: str, invoice_data: Dict, doc_invoice_type: str = None, contact_id: str = None) -> bool:
         """
         Update voucher with extracted invoice data
         
@@ -161,17 +171,18 @@ class LexofficeClient:
             }
             
             # Add contact info based on invoice type
-            # For salesinvoice (outgoing): customer is the contact
-            # For purchaseinvoice (incoming): vendor is the contact
-            if doc_invoice_type == "outgoing":
-                # Ausgangsrechnung: Kunde ist der Kontakt
-                contact_name = invoice_data.get("customer_name") or invoice_data.get("vendor_name")
+            # Use contactId if we found/created the contact
+            if contact_id:
+                voucher_payload["contactId"] = contact_id
             else:
-                # Eingangsrechnung: Lieferant ist der Kontakt
-                contact_name = invoice_data.get("vendor_name")
-            
-            if contact_name:
-                voucher_payload["contactName"] = contact_name
+                # Fallback: try with contactName only
+                if doc_invoice_type == "outgoing":
+                    contact_name = invoice_data.get("customer_name") or invoice_data.get("vendor_name")
+                else:
+                    contact_name = invoice_data.get("vendor_name")
+                
+                if contact_name:
+                    voucher_payload["contactName"] = contact_name
             
             # Remove None values
             voucher_payload = {k: v for k, v in voucher_payload.items() if v is not None}
@@ -209,6 +220,70 @@ class LexofficeClient:
                 return 19
         except:
             return 19
+
+    def _get_or_create_contact(self, contact_name: str, invoice_type: str) -> Optional[str]:
+        """
+        Search for existing contact or create new one
+        
+        Args:
+            contact_name: Name of the contact to search/create
+            invoice_type: 'incoming' or 'outgoing'
+            
+        Returns:
+            Contact ID if found/created, None otherwise
+        """
+        try:
+            # Step 1: Search for existing contact
+            logger.info(f"Searching for contact: {contact_name}")
+            search_response = requests.get(
+                f"{self.api_url}/v1/contacts",
+                headers=self.headers,
+                params={"name": contact_name},
+                timeout=10
+            )
+            
+            if search_response.status_code == 200:
+                contacts = search_response.json().get("content", [])
+                if contacts:
+                    contact_id = contacts[0].get("id")
+                    logger.info(f"Found existing contact: {contact_name} (ID: {contact_id})")
+                    return contact_id
+            
+            # Step 2: Contact not found, create new one
+            logger.info(f"Contact not found, creating new: {contact_name}")
+            
+            # Determine contact role based on invoice type
+            if invoice_type == "outgoing":
+                roles = {"customer": {}}
+            else:
+                roles = {"vendor": {}}
+            
+            contact_payload = {
+                "version": 0,
+                "roles": roles,
+                "company": {
+                    "name": contact_name
+                }
+            }
+            
+            create_response = requests.post(
+                f"{self.api_url}/v1/contacts",
+                headers={**self.headers, "Content-Type": "application/json"},
+                json=contact_payload,
+                timeout=10
+            )
+            
+            if create_response.status_code == 200:
+                contact_id = create_response.json().get("id")
+                logger.info(f"Created new contact: {contact_name} (ID: {contact_id})")
+                return contact_id
+            else:
+                logger.error(f"Failed to create contact: {create_response.status_code} - {create_response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error in get_or_create_contact: {e}")
+            return None
 
     def health_check(self) -> bool:
         """Check if Lexoffice API is reachable"""
