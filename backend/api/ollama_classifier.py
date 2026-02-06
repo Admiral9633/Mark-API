@@ -51,7 +51,7 @@ class OllamaClassifier:
                         "num_predict": 200
                     }
                 },
-                timeout=120
+                timeout=180
             )
             
             if response.status_code != 200:
@@ -109,7 +109,7 @@ class OllamaClassifier:
                         "num_predict": 400
                     }
                 },
-                timeout=180
+                timeout=240
             )
             
             if response.status_code != 200:
