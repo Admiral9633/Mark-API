@@ -47,7 +47,7 @@ class OllamaClassifier:
                     "stream": False,
                     "format": "json",
                     "options": {
-                        "temperature": 0.1,
+                        "temperature": 0,
                         "num_predict": 500
                     }
                 },
@@ -87,38 +87,25 @@ class OllamaClassifier:
         # Use more text for better extraction (first 2500 characters)
         text_sample = text[:2500] if len(text) > 2500 else text
         
-        prompt = f"""Extrahiere Rechnungsdaten aus diesem Dokument. Antworte NUR mit JSON, keine zusätzlichen Texte.
+        prompt = f"""Analysiere dieses Dokument und antworte NUR mit JSON (keine Erklärungen).
 
-DOKUMENT:
+DOKUMENT TEXT:
 {text_sample}
 
-AUFGABE:
-1. Prüfe ob dies eine Rechnung ist
-2. Typ: "incoming" wenn ich bezahlen muss, "outgoing" wenn ich der Absender bin
-3. Extrahiere: Rechnungsnummer, Datum, Betrag (als Zahl!), Lieferant/Kunde
+PRÜFE:
+1. Enthält das Wort "Rechnung" oder "Invoice"? → is_invoice = true
+2. Wer ist der ABSENDER?
+   - Wenn "Dr. med. Björn Micka" ABSENDER ist → invoice_type = "outgoing"
+   - Wenn eine andere Firma ABSENDER ist → invoice_type = "incoming"
+3. Extrahiere: Rechnungsnummer, Datum, Betrag (als ZAHL!), Lieferant
 
-JSON ANTWORT:
-{{
-  "is_invoice": true,
-  "invoice_type": "incoming",
-  "confidence": 0.9,
-  "reasoning": "Enthält Rechnungsnummer und Betrag",
-  "invoice_number": "RE-2024-001",
-  "invoice_date": "2024-01-26",
-  "due_date": "2024-02-26",
-  "total_amount": 1234.56,
-  "net_amount": 1000.00,
-  "tax_amount": 234.56,
-  "currency": "EUR",
-  "vendor_name": "Musterfirma GmbH",
-  "vendor_address": "Musterstraße 1, 12345 Stadt",
-  "customer_name": "Kunde XY"
-}}
+BEISPIEL JSON:
+{{"is_invoice":true,"invoice_type":"outgoing","confidence":0.95,"reasoning":"Enthält Rechnung 2026-F00023-R001","invoice_number":"2026-F00023-R001","invoice_date":"2026-01-21","due_date":null,"total_amount":150.00,"net_amount":126.05,"tax_amount":23.95,"currency":"EUR","vendor_name":"Dr. med. Björn Micka","vendor_address":"Christoph-Dassler-Str. 22, 91074 Herzogenaurach","customer_name":"Erkan Ökcü"}}
 
 WICHTIG:
-- total_amount, net_amount, tax_amount sind ZAHLEN (nicht Strings!)
-- Datum Format: YYYY-MM-DD
-- Falls Feld nicht gefunden: null (nicht "null" als String!)"""
+- Beträge als Zahlen (nicht Strings!)
+- Falls nicht gefunden: null
+- Datum: YYYY-MM-DD"""
 
         return prompt
 
